@@ -1,14 +1,11 @@
 package com.milkyblue;
 
 import java.awt.BorderLayout;
-import java.awt.GridBagLayout;
-import java.awt.GridBagConstraints;
-import java.awt.Color;
-import java.awt.Dimension;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.util.Stack;
 
+import javax.swing.BoxLayout;
 import javax.swing.JButton;
 import javax.swing.JFrame;
 import javax.swing.JLabel;
@@ -26,7 +23,6 @@ public class MultiThreadCounter {
     mainFrame = new JFrame("Multithread Counter");
     mainPanel = new JPanel(new BorderLayout());
     topPanel = new JPanel();
-    centerPanel = new JPanel(new GridBagLayout());
     centerPanel = new JPanel();
     lblAdd = new JLabel("Add a new counter: ");
     btnAdd = new JButton("ADD");
@@ -35,8 +31,6 @@ public class MultiThreadCounter {
     for (int i = 0; i < initialCounters; i++)
       counters.push(new Counter());
 
-    System.out.println(counters.size());
-
     addAttributes();
     addListeners();
     build();
@@ -44,9 +38,9 @@ public class MultiThreadCounter {
   }
 
   private void addAttributes() {
-    // centerPanel.setPreferredSize(new Dimension(300, 0));
+    centerPanel.setLayout(new BoxLayout(centerPanel, BoxLayout.Y_AXIS));
     mainFrame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-    // mainFrame.setResizable(false);
+    mainFrame.setResizable(false);
   }
 
   private void addListeners() {
@@ -64,13 +58,8 @@ public class MultiThreadCounter {
     topPanel.add(lblAdd);
     topPanel.add(btnAdd);
 
-    for (Counter c : counters) {
-      GridBagConstraints gbc = new GridBagConstraints();
-      gbc.gridx = 1;
-      gbc.gridy = counters.indexOf(c) + 1;
-      System.out.println(counters.indexOf(c) + 1);
-      centerPanel.add(c, gbc);
-    }
+    for (Counter c : counters)
+      centerPanel.add(c);
 
     mainPanel.add(topPanel, BorderLayout.NORTH);
     mainPanel.add(centerPanel, BorderLayout.CENTER);
@@ -85,16 +74,19 @@ public class MultiThreadCounter {
   }
 
   class Counter extends JPanel implements Runnable {
-    public int id = (int) Math.floor(Math.random() * 100);
     private int count;
     private JTextField txtCount;
     private JButton btnStart, btnStop;
+    private boolean isRunning;
+    private Thread selfThread;
 
     public Counter() {
       count = 0;
       txtCount = new JTextField(10);
       btnStart = new JButton("Start");
       btnStop = new JButton("Stop");
+      isRunning = false;
+      selfThread = null;
 
       this.addAttributes();
       this.addListeners();
@@ -102,13 +94,22 @@ public class MultiThreadCounter {
     }
 
     private void addAttributes() {
-      setBackground(Color.CYAN);
+      txtCount.setText(Integer.toString(count));
+      btnStop.setEnabled(false);
     }
 
     private void addListeners() {
       btnStart.addActionListener(new ActionListener() {
         public void actionPerformed(ActionEvent e) {
-          System.out.println("Hello");
+          selfThread = new Thread(Counter.this);
+          selfThread.start();
+        }
+      });
+
+      btnStop.addActionListener(new ActionListener() {
+        public void actionPerformed(ActionEvent e) {
+          isRunning = false;
+          btnStop.setEnabled(false);
         }
       });
     }
@@ -120,7 +121,22 @@ public class MultiThreadCounter {
     }
 
     public void run() {
+      btnStart.setEnabled(false);
+      btnStop.setEnabled(true);
+      isRunning = true;
+      while (true) {
+        try {
+          Thread.sleep(100);
+        } catch (Exception e) {
+          System.out.println("Interrupted");
+        }
+        if (isRunning) {
+          txtCount.setText(Integer.toString(count++));
+        } else {
+          break;
+        }
+      }
+      btnStart.setEnabled(true);
     }
-
   }
 }
