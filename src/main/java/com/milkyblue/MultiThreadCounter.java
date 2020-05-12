@@ -88,6 +88,7 @@ public class MultiThreadCounter {
 
   // Counter inner Class, inherits JPanel to model a Counter GUI and runs on a
   // dedicated Thread.
+  @SuppressWarnings("serial")
   class Counter extends JPanel implements Runnable {
     private int count;
     private JTextField txtCount;
